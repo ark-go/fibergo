@@ -11,6 +11,10 @@ buildlinux:
 	@echo $$($(version))
 	$(info +Компиляция Linux)
 	go build -ldflags "-s -w -X 'main.versionProg=$$($(version))'" -o ./bin/main/$(PROJECTNAME) cmd/main/main.go
+buildlinuxbot:
+	@echo $$($(version))
+	$(info +Компиляция Linux)
+	go build -ldflags "-s -w" -o ./bin/bot/tgbot cmd/bot/main/main.go
 buildzip:
 	$(info +Компиляция с сжатием)
 	go build -ldflags "-s -w" -o ./bin/main/$(PROJECTNAME) cmd/main/main.go
@@ -29,6 +33,10 @@ buildandroid:
 run: buildlinux buildwin 
 	$(info +Запуск)
 	./bin/main/$(PROJECTNAME)
+
+runbot: buildlinuxbot 
+	$(info +Запуск)
+	./bin/bot/tgbot
 
 build: buildlinux buildwin #buildwasm buildandroid
 	$(info +Сборка)
