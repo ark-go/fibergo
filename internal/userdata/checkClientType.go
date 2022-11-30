@@ -29,7 +29,7 @@ func (c ClientType) String() string {
 	return "unknown"
 }
 
-func (u *User) checkTypeClient(msg *telegrambot.Message) {
+func (u *User) checkClientType(msg *telegrambot.Message) {
 	switch msg.Chat.Type {
 	case telegrambot.ChatTypePrivate:
 		u.ClientType = Client_Private

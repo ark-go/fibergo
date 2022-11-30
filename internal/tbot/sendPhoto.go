@@ -16,7 +16,7 @@ func (b *Bot) sendPhoto(usr *userdata.User, filePath string, delay ...int) (*tel
 		return nil, err
 	}
 	msgout, err := b.Api.SendPhoto(&telegrambot.SendPhotoParams{
-		ChatID: usr.ChatId,
+		ChatID: usr.MsgChatId(),
 		Photo: &telegrambot.FileReader{
 			Name:   "test",
 			Reader: file,
@@ -31,7 +31,7 @@ func (b *Bot) sendPhoto(usr *userdata.User, filePath string, delay ...int) (*tel
 	if len(delay) > 0 && delay[0] > 5 {
 		delayTime = delay[0]
 	}
-	usr.LastMsgQueues.Add(int64(msgout.MessageID), int64(usr.ChatId), delayTime)
+	usr.Last.MsgQueues.Add(int64(msgout.MessageID), int64(usr.MsgChatId()), delayTime)
 
 	if err == nil && len(delay) > 0 {
 		go func() {

@@ -10,19 +10,19 @@ import (
 
 // удаление собщений отправленных пользователю из очереди
 func (b *Bot) deleteMessage(usr *userdata.User) error {
-	for i, usrmes := range usr.LastMsgQueues {
+	for i, usrmes := range usr.Last.MsgQueues {
 		if usrmes.TimeDelete.Before(time.Now()) {
-			log.Println("for del", *usrmes.ChatID, *usrmes.MessageID, usrmes.TimeDelete)
+			//log.Println("for del", *usrmes.ChatID, *usrmes.MessageID, usrmes.TimeDelete)
 
 			b.Api.DeleteMessage(&telegrambot.DeleteMessageParams{
 				ChatID:    telegrambot.ChatID(*usrmes.ChatID),
 				MessageID: telegrambot.MessageID(*usrmes.MessageID),
 			})
 			//INFO удаляем в любом случае, мы не выяняем причину но осталяя сообщение мы его больще никогда не сотрем, если оно уже стерто
-			usr.LastMsgQueues.RemoveId(i)
+			usr.Last.MsgQueues.RemoveId(i)
 		}
 	}
-	log.Println("Осталось задания для удаления:", usr.LastMsgQueues.Size())
+	//log.Println("Осталось задания для удаления:", usr.LastMsgQueues.Size())
 	return nil
 }
 
@@ -40,18 +40,18 @@ func (b *Bot) deleteMessageUser(msg *telegrambot.Message) error {
 
 // удаление сообщений с Меню-кнопками в зависимости от разного источника где был юзер чат бот и тд
 func (b *Bot) deleteMessageMenu(usr *userdata.User) error {
-	for _, usrmes := range usr.LastMenuAll {
-		log.Println("меню было", len(usr.LastMenuAll))
-		if usrmes.ChatID == usr.ChatId {
+	for _, usrmes := range usr.Last.MenuAll {
+		log.Println("меню было", len(usr.Last.MenuAll))
+		if usrmes.ChatID == usr.MsgChatId() {
 			err := b.Api.DeleteMessage(&telegrambot.DeleteMessageParams{
 				ChatID:    telegrambot.ChatID(usrmes.ChatID),
 				MessageID: telegrambot.MessageID(usrmes.MessageID),
 			})
 			if err == nil {
-				delete(usr.LastMenuAll, usrmes.ChatID)
+				delete(usr.Last.MenuAll, usrmes.ChatID)
 			}
 		}
-		log.Println("меню стало", len(usr.LastMenuAll))
+		log.Println("меню стало", len(usr.Last.MenuAll))
 	}
 	return nil
 }

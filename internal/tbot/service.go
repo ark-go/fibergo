@@ -17,7 +17,7 @@ type Bot struct {
 
 func Init(pg *db.Pg) {
 
-	api, me, err := telegrambot.NewAPI("5816387767:AAG-2KPVIppM1PemOzwa6RaGMtSXOODjppM")
+	api, me, err := telegrambot.NewAPI(os.Getenv("TG_Bot"))
 	if err != nil {
 		log.Fatalf("Error: %v", err)
 	}

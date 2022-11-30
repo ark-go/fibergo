@@ -40,20 +40,20 @@ func (pg *Pg) LoadData(msg *telegrambot.Message) *userdata.User {
 
 	if res == "" {
 		// Не найдено
-		log.Printf("Новый клиент %+v", user.UserId)
+		log.Printf("Новый клиент %+v", user.MsgUserId())
 		return user
 	}
 
 	// и записываем в него данные из базы
 	log.Println("mess id", msg.MessageID)
 	user.FromGOB64(res, msg)
-	if user.ChatId == msg.Chat.ID {
+	if user.MsgChatId() == msg.Chat.ID {
 		log.Println("Пользователь из базы - чат тотже", user.ClientType)
 	}
 	// перепишем актуальные данные
 	user.ChangeMessage(msg)
 
-	log.Printf("База данных LoadData : %d, chat %d", user.UserId, user.ChatId)
+	log.Printf("База данных LoadData : %d, chat %d", user.MsgUserId(), user.MsgChatId())
 
 	return user
 }

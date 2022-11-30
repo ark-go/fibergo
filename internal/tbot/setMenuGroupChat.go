@@ -11,7 +11,7 @@ import (
 func (b *Bot) setMenuGroupChat(user *userdata.User) {
 
 	msgout, err := b.Api.SendMessage(&telegrambot.SendMessageParams{
-		ChatID: user.ChatId,
+		ChatID: user.MsgChatId(),
 		//Text:                  fmt.Sprintf("Привет %v,  %v, ваш ид: %d", msg.From.FirstName, msg.From.LastName, msg.Chat.ID),
 		Text:                  ".",
 		ProtectContent:        true, // Запрет копирования - пересылки сообщения
@@ -36,7 +36,8 @@ func (b *Bot) setMenuGroupChat(user *userdata.User) {
 					// WebApp: &telegrambot.WebAppInfo{
 					// 	URL: "https://bake.x.arkadii.ru",
 					// },
-					Text: "Лах",
+					Text:            "Нажми сюда",
+					RequestLocation: true,
 				},
 				{
 
@@ -50,11 +51,11 @@ func (b *Bot) setMenuGroupChat(user *userdata.User) {
 	} else {
 		//user.LastMenu.MessageID = msgout.MessageID
 		//user.LastMenu.ChatID = msgout.Chat.ID
-		user.LastMenuAll.Add(msgout.Chat.ID, msgout.MessageID, 15)
-		log.Printf("Отправили меню %+v", user.LastMenuAll)
+		user.Last.MenuAll.Add(msgout.Chat.ID, msgout.MessageID, 15)
+		log.Printf("Отправили меню %+v", user.Last.MenuAll)
 		go func() {
 			time.Sleep(time.Duration(16) * time.Second)
-			log.Printf("Хотим удалить меню %+v", user.LastMenuAll)
+			log.Printf("Хотим удалить меню %+v", user.Last.MenuAll)
 			b.deleteMessageMenu(user)
 		}()
 	}

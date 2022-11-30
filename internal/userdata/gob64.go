@@ -10,13 +10,14 @@ import (
 )
 
 func (u *User) ToGOB64() string {
+	// упаковываем и храним только u.Last
 	b := &bytes.Buffer{}
 	//	gob.Register(u.LastMsgQueues.GetValues())
 	// gob.Register(u)
 	// gob.Register(u.LastMsgQueues)
 	e := gob.NewEncoder(b)
-	//u.TgUser = nil
-	err := e.Encode(u)
+
+	err := e.Encode(u.Last)
 	if err != nil {
 		fmt.Println(`Ошибка failed gob Encode`, err, err.Error())
 	}
@@ -24,7 +25,7 @@ func (u *User) ToGOB64() string {
 }
 
 func (u *User) FromGOB64(str string, msg *telegrambot.Message) {
-	//	m := &User{}
+	// распаковываем и добавляем только u.Last
 	by, err := base64.StdEncoding.DecodeString(str)
 	if err != nil {
 		fmt.Println(`не раскодировать данные из базы`, err)
@@ -36,7 +37,7 @@ func (u *User) FromGOB64(str string, msg *telegrambot.Message) {
 	// gob.Register(u.LastMsgQueues)
 
 	d := gob.NewDecoder(&b)
-	err = d.Decode(&u)
+	err = d.Decode(&u.Last)
 	if err != nil {
 		fmt.Println(`Не раскодировать данные GOB`, err)
 		u = InitUser(msg)

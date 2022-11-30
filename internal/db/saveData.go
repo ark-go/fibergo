@@ -14,10 +14,10 @@ func (pg *Pg) SaveData(usr *userdata.User) {
 	`
 	txt2 := usr.ToGOB64()
 
-	rows, err := pg.Pool.Query(context.Background(), query, int64(usr.UserId), int64(usr.ChatId), txt2)
+	rows, err := pg.Pool.Query(context.Background(), query, int64(usr.MsgUserId()), int64(usr.MsgChatId()), txt2)
 	if err != nil {
-		log.Fatal("Ошибка запроса DB query id:", int64(usr.UserId), " err:", err.Error())
+		log.Fatal("Ошибка запроса DB query id:", int64(usr.MsgUserId()), " err:", err.Error())
 	}
 	rows.Close()
-	log.Println("База данных save? id:", int64(usr.UserId))
+	log.Println("База данных save? id:", int64(usr.MsgUserId()))
 }

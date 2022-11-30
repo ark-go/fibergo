@@ -16,14 +16,14 @@ func (b *Bot) sendTimeMessage(usr *userdata.User, message string, delay ...int) 
 	b.deleteMessage(usr)
 	if message != "" {
 		msgout, err := b.Api.SendMessage(&telegrambot.SendMessageParams{
-			ChatID:                usr.ChatId,
+			ChatID:                usr.MsgChatId(),
 			Text:                  message,
 			ParseMode:             telegrambot.ParseModeHTML,
 			ProtectContent:        true, // Запрет копирования - пересылки сообщения
 			DisableWebPagePreview: true, // отключить предпросмотр ссылок url
 			DisableNotification:   true, // без звука
 		})
-		usr.LastMsgQueues.Add(int64(msgout.MessageID), int64(usr.ChatId), delayTime)
+		usr.Last.MsgQueues.Add(int64(msgout.MessageID), int64(usr.MsgChatId()), delayTime)
 		if err == nil {
 			go func() {
 				time.Sleep(time.Duration(delayTime) * time.Second)
