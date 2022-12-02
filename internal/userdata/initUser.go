@@ -2,9 +2,11 @@ package userdata
 
 import (
 	"log"
+	"strconv"
 	"time"
 
 	//	"github.com/ark-go/fibergo/internal/queues"
+	//	"github.com/ark-go/fibergo/internal/tbot"
 	"github.com/nickname76/telegrambot"
 )
 
@@ -15,6 +17,7 @@ type LastUserMessage struct {
 	LastTime  time.Time
 }
 type User struct {
+	//	Bot *tbot.Bot
 	// // userId
 	// UserId telegrambot.UserID
 	// // chatId
@@ -22,7 +25,8 @@ type User struct {
 	// сообщение поступившее от пользователя
 	Msg *telegrambot.Message
 	// Стадия
-	Stage Stagekey
+	Stage    Stagekey
+	StepUser StepUser
 
 	// уже был в базе
 	Olden bool
@@ -67,9 +71,17 @@ func (u *User) MsgUserId() (userId telegrambot.UserID) {
 	return
 }
 
+func (u *User) GetChatUserStr() ChatUserStr {
+	ch := u.MsgChatId()
+	chh := int64(ch)
+	us := u.MsgUserId()
+	uss := int64(us)
+	return ChatUserStr(strconv.FormatInt(chh, 10) + ":" + strconv.FormatInt(uss, 10))
+}
+
 type Last struct {
 	// Стадия
-	Stage Stagekey
+	//Stage Stagekey
 	// Последнее сообщение от юзера
 	UserMessage *LastUserMessage
 	// последнее InlineMenu отправлено
@@ -78,6 +90,8 @@ type Last struct {
 	MenuAll LastMenuAll
 	// очередь отправленных сообщений
 	MsgQueues LastMessageQueues
+	// текущий шаг программы type MapStepUser map[ChatUserStr]StepUser
+	MapStepUser MapStepUser
 }
 
 func InitUser(msg *telegrambot.Message) *User {
@@ -92,11 +106,12 @@ func InitUser(msg *telegrambot.Message) *User {
 		InlineMenuAll: LastInlineMenuAll{},
 		MenuAll:       LastMenuAll{},
 		MsgQueues:     LastMessageQueues{},
+		MapStepUser:   MapStepUser{},
 	}
+
 	// User - что знаемпро юзера
 	user := &User{
 		Msg:         msg,
-		Stage:       Stage_Start,
 		MessageType: Msg_NotAvailable,
 		ClientType:  Client_NotAvailable,
 		// Last - эту структуру храним в базе, для пользователя

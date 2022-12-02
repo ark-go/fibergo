@@ -10,8 +10,10 @@ func (u *User) CreateInlineMenu() *telegrambot.InlineKeyboardMarkup {
 				CallbackData: "```Привет```",
 			},
 			{
-				Text:         "333333",
-				CallbackData: "333333",
+				Text: "www",
+				WebApp: &telegrambot.WebAppInfo{
+					URL: "https://bake.x.arkadii.ru",
+				},
 			},
 			{
 				Text:         "1",
@@ -29,6 +31,14 @@ func (u *User) CreateInlineMenu() *telegrambot.InlineKeyboardMarkup {
 			{
 				Text:         "23",
 				CallbackData: "23",
+			},
+			{
+				Text:         "233",
+				CallbackData: "2334",
+			},
+			{
+				Text:         "233",
+				CallbackData: "2334",
 			},
 			{
 				Text:         "Сброс",

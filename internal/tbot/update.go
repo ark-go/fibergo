@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ark-go/fibergo/internal/programs"
 	"github.com/ark-go/fibergo/internal/stages"
 	"github.com/ark-go/fibergo/internal/userdata"
 	"github.com/nickname76/telegrambot"
@@ -19,7 +20,7 @@ func (b *Bot) Update(update *telegrambot.Update) {
 	if msg = update.Message; msg != nil { // чаты и группы
 		usr = b.Pg.LoadData(msg)
 		if msg.IsAutomaticForward {
-			log.Println("Сообщение переслано из канала в чат.") //, msg.ForwardFrom.FirstName)
+			log.Println("Сообщение переслано из канала в чат, а из чата сюда") //, msg.ForwardFrom.FirstName)
 		}
 	}
 	if usr.ClientType == userdata.Client_Channel {
@@ -40,9 +41,12 @@ func (b *Bot) Update(update *telegrambot.Update) {
 		log.Println("Пока пропустим  - пустое сообщение вероятно канал")
 		return
 	}
+	//usr.Last.MapStepUser[usr.GetChatUserStr()] = usr.StepUser
+	log.Printf("Программа: %+v", usr.Last.MapStepUser[usr.GetChatUserStr()])
+	//usr.Last.MapStepUser[usr.GetChatUserStr()] = userdata.StepUser{Stagekey: userdata.Stage_Start, Program: userdata.Programm_Volk}
 
 	log.Println("Message Type: ", usr.MessageType)
-	log.Println("Client Type: ", usr.ClientType, msg.MessageID, msg.Chat.ID)
+	log.Println("Client Type: ", usr.ClientType, usr.GetChatUserStr())
 	if usr.ClientType == userdata.Client_Group {
 		log.Println("Группа: ", usr.ClientType, msg.Chat.FirstName, msg.Chat.Title, msg.Chat.Type)
 	}
@@ -73,7 +77,7 @@ func (b *Bot) Update(update *telegrambot.Update) {
 		cmd, arg := b.ParseMessageCommand(msg)
 		log.Println("Комманд", cmd, arg)
 		if msg.Text == "/start" {
-			b.setMenuGroupChat(usr)
+			b.MenuSend(usr, "Старт:")
 		} else {
 			b.deleteMessageMenu(usr)
 		}
@@ -82,46 +86,11 @@ func (b *Bot) Update(update *telegrambot.Update) {
 
 		stages.Begin(msg)
 		usr.Txt = time.Now().Format("02.01.2006 15:04:05") + "\n" + msg.Text
-		//b.deleteMessage(msg)
 
 		log.Println("Вошел: ", "| ", usr.MsgUserId(), " | ", usr.Last.UserMessage.LastTime.Format("02.01.2006 15:04:05"))
 		//BUG
 		b.sendTimeMessage(usr, fmt.Sprintf("Привет %v  %v %s", msg.From.FirstName, msg.From.LastName, strings.Repeat("ᅠ", 20)), 10)
-
-		// if msg.Chat.Type == telegrambot.ChatTypePrivate {
-		// 	b.Api.SendMessage(&telegrambot.SendMessageParams{
-		// 		ChatID: msg.Chat.ID,
-		// 		Text:   "<b>Вах вах вах Привате </b>",
-		// 		//DisableNotification: true, // запрет копирования и пересылки
-		// 		ParseMode: telegrambot.ParseModeHTML,
-		// 		ReplyMarkup: &telegrambot.InlineKeyboardMarkup{
-		// 			InlineKeyboard: [][]*telegrambot.InlineKeyboardButton{{
-		// 				{
-		// 					WebApp: &telegrambot.WebAppInfo{
-		// 						URL: "https://bake.x.arkadii.ru",
-		// 					},
-		// 				},
-		// 			}},
-		// 		},
-		// 	})
-		// }
-		//----------
-		// path, err := utils.GetExecPath()
-		// if err != nil {
-		// 	log.Println(err)
-		// 	return
-		// }
-		// path = filepath.Join(path, "img-1.jpg")
-		// b.sendPhoto(usr, path, 30)
-
-		// b.Api.SendLocation(&telegrambot.SendLocationParams{
-		// 	ChatID:             usr.ChatId,
-		// 	Latitude:           59.8983,
-		// 	Longitude:          30.2618,
-		// 	HorizontalAccuracy: 10.4, // радиус в метрах
-		// 	LivePeriod:         60,   // В секундах от 60
-		// })
-
+		programs.StartProgram(usr)
 		//BUG
 		b.InlineMenuSet(usr, usr.CreateInlineMenu())
 		usr.Last.UserMessage.LastTime = time.Now()
