@@ -1,4 +1,4 @@
-package tbot
+package send
 
 import (
 	"log"
@@ -6,9 +6,9 @@ import (
 	"github.com/nickname76/telegrambot"
 )
 
-func (b *Bot) editInlineMessage(inl *telegrambot.CallbackQuery, message string) error {
+func (s *Send) editInlineMessage(inl *telegrambot.CallbackQuery, message string) error {
 	log.Println("inl id", inl.InlineMessageID, " :>", inl.Message.MessageID)
-	b.Api.EditMessageText(&telegrambot.EditMessageTextParams{
+	s.api.EditMessageText(&telegrambot.EditMessageTextParams{
 		ChatID:          inl.Message.Chat.ID,
 		MessageID:       inl.Message.MessageID,
 		InlineMessageID: inl.InlineMessageID,

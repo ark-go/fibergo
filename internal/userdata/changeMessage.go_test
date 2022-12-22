@@ -1,0 +1,12 @@
+package userdata
+
+import "github.com/nickname76/telegrambot"
+
+// func (u *User) ChangeMessage(msg *telegrambot.Message) {
+
+// 	//if u.ClientType == Client_Channel {
+
+// 	//	u.Msg = msg
+// 	u.checkMessageType(msg)
+// 	u.checkClientType(msg)
+// }

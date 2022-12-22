@@ -1,8 +1,8 @@
-package tbot
+package pDefault
 
 import "github.com/nickname76/telegrambot"
 
-func (b *Bot) MenuButton() [][]*telegrambot.KeyboardButton {
+func (b *ProgDef) MenuButton() [][]*telegrambot.KeyboardButton {
 
 	return [][]*telegrambot.KeyboardButton{{
 		{
@@ -17,9 +17,6 @@ func (b *Bot) MenuButton() [][]*telegrambot.KeyboardButton {
 		},
 	}, {
 		{
-			// WebApp: &telegrambot.WebAppInfo{
-			// 	URL: "https://bake.x.arkadii.ru",
-			// },
 			Text:            "Нажми сюда",
 			RequestLocation: true,
 		},

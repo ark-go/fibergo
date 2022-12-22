@@ -1,6 +1,6 @@
 package userdata
 
-func (u *User) Expect(msg MessageType) bool {
+// func (u *User) Expect(msg MessageType) bool {
 
-	return u.MessageType == msg
-}
+// 	return u.MessageType == msg
+// }

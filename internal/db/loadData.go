@@ -4,12 +4,13 @@ import (
 	"context"
 	"log"
 
+	//"github.com/ark-go/fibergo/internal/tbot"
 	"github.com/ark-go/fibergo/internal/userdata"
 	"github.com/nickname76/telegrambot"
 )
 
 func (pg *Pg) LoadData(msg *telegrambot.Message) *userdata.User {
-	// создаем новый
+	//!! создаем новый  Обязательно
 	user := userdata.InitUser(msg)
 	if msg.From == nil {
 		return nil
@@ -19,9 +20,9 @@ func (pg *Pg) LoadData(msg *telegrambot.Message) *userdata.User {
 	WHERE userid = $1 AND chatid = $2
 	`
 
-	rows, err := pg.Pool.Query(context.Background(), query, int64(msg.From.ID), int64(msg.Chat.ID))
+	rows, err := pg.Pool.Query(context.Background(), query, int64(user.GetUserId()), int64(user.GetChatId()))
 	if err != nil {
-		log.Fatal("Ошибка запроса DB LoadData  id:", int64(msg.From.ID), " err:", err.Error())
+		log.Fatal("Ошибка запроса DB LoadData  id:", int64(user.GetUserId()), " err:", err.Error())
 	}
 	defer rows.Close()
 	if rows.Err() != nil {
@@ -40,20 +41,14 @@ func (pg *Pg) LoadData(msg *telegrambot.Message) *userdata.User {
 
 	if res == "" {
 		// Не найдено
-		log.Printf("Новый клиент %+v", user.MsgUserId())
+		log.Printf("Новый клиент %+v", user.GetUserId())
 		return user
 	}
 
 	// и записываем в него данные из базы
-	log.Println("mess id", msg.MessageID)
 	user.FromGOB64(res, msg)
-	if user.MsgChatId() == msg.Chat.ID {
-		log.Println("Пользователь из базы - чат тотже", user.ClientType)
-	}
-	// перепишем актуальные данные
-	user.ChangeMessage(msg)
 
-	log.Printf("База данных LoadData : %d, chat %d", user.MsgUserId(), user.MsgChatId())
+	log.Printf("База данных LoadData : %d, chat %d", user.GetUserId(), user.GetChatId())
 
 	return user
 }

@@ -1,156 +1,162 @@
 package tbot
 
 import (
-	"fmt"
 	"log"
-	"strings"
+	"runtime"
 	"time"
 
+	"github.com/ark-go/fibergo/internal/msgtypes"
 	"github.com/ark-go/fibergo/internal/programs"
-	"github.com/ark-go/fibergo/internal/stages"
-	"github.com/ark-go/fibergo/internal/userdata"
+	"github.com/ark-go/fibergo/internal/send"
+	"github.com/ark-go/fibergo/internal/utils"
 	"github.com/nickname76/telegrambot"
 )
 
+// func (b *Bot) ToIfaceBot() {}
+var mStats runtime.MemStats
+
 func (b *Bot) Update(update *telegrambot.Update) {
+	runtime.ReadMemStats(&mStats)
+	//	log.Printf("%+v", mStats)
+	log.Printf("%+v", utils.ByteCountIEC(mStats.HeapSys-mStats.HeapAlloc))
+	/*
+	   !! Группа не определяет кто нажимает Inline кнопки.. они идут от группы
+	   !! и сообщение в группе идет всем в группу
+	   !! такчто надо отключить работу с картинками, по юзерам в группе
+	   !! текстовые сообщения идентифицируются нормально
+	*/
 	//msg1 := update.InlineQuery
 	log.Println(">---------- пришло --------------------<")
-	usr := &userdata.User{}
-	var msg *telegrambot.Message
-	if msg = update.Message; msg != nil { // чаты и группы
-		usr = b.Pg.LoadData(msg)
-		if msg.IsAutomaticForward {
-			log.Println("Сообщение переслано из канала в чат, а из чата сюда") //, msg.ForwardFrom.FirstName)
+
+	msg, rt, err := msgtypes.GetMsgAndTypes(update)
+	if err != nil {
+		log.Println("Ошибка типа", err.Error())
+		log.Panicln(" Типы не забыть !!!!", rt) // nil отуда?
+		//! не ставлю возврат, надо найти какой Update все Update надо вписать  return
+	}
+
+	/*
+		!! боты отправляют, нажатие inline-кнопки тоже bot!
+		 если это бот отправляет чтото кроме нажатия кнопки, пропускаем
+	*/
+	// ввод из канала
+	if rt.UpdateType == msgtypes.Upd_ChannelPost { // .Upd_EditedChannelPost {
+		log.Println("Канал пропускаем, пока")
+		return
+	}
+	//!! редактирование канала
+	if rt.UpdateType == msgtypes.Upd_EditedChannelPost { // .Upd_EditedChannelPost {
+		log.Println("Канал редактируем  - пропускаем, пока")
+		return
+	}
+	//!! в канале нет From
+	if msg.From != nil && msg.From.IsBot { // это бот
+		// нажатие кнопок проискодит от имени бота
+		// если это бот но не нажимает кнопки то пропускаем
+		// не обслуживаем бота , кроме нажатия кнопок
+		if rt.UpdateType != msgtypes.Upd_CallbackQuery {
+			log.Println("Это бот, не общаемся с ними")
+			return
 		}
 	}
-	if usr.ClientType == userdata.Client_Channel {
-		log.Println("Канал - пропускаем не обслуживаем")
-		// TODO разобраться с каналами
+
+	isDeleteMessage := false
+	if msg.IsAutomaticForward {
+		// сообщенее переслано из канала в связанную группу
+		// в которой у нас есть бот мы не должны реагировать на это сообщение,
+		// и не обслуживать его, оно так и останется в группе
+		//! надо бы пропустить и отменять у разбора в ProgramBegin
+		log.Println("Из канала пришло в группу, пропускаем")
+		return
+	}
+	switch rt.UpdateType {
+	case msgtypes.Upd_EditedMessage:
+		// зачем нам редактировать сообщения, удалим целиком раз не нравится
+		isDeleteMessage = true
+	case msgtypes.Upd_ChannelPost,
+		msgtypes.Upd_EditedChannelPost:
+		// не обращаем внимание на сообщения из канала
+		return
+	default:
+		//return
+	}
+
+	if isDeleteMessage {
+		// удаляем сообщение пользователя, если нам не нравится его тип
+		err := b.Api.DeleteMessage(&telegrambot.DeleteMessageParams{
+			ChatID:    msg.Chat.ID,
+			MessageID: msg.MessageID,
+		})
+		if err != nil {
+			log.Println("Не удалить сообщение", err.Error())
+		}
 		return
 	}
 
-	// else if msg = update.ChannelPost; msg != nil {
-	// 	usr = b.Pg.LoadData(msg)
-	// }
-	// ответы кнопок inline
-	if inl := update.CallbackQuery; inl != nil {
-		b.inlineCommand(inl)
-		return
-	}
-	if msg == nil {
-		log.Println("Пока пропустим  - пустое сообщение вероятно канал")
-		return
-	}
-	//usr.Last.MapStepUser[usr.GetChatUserStr()] = usr.StepUser
-	log.Printf("Программа: %+v", usr.Last.MapStepUser[usr.GetChatUserStr()])
-	//usr.Last.MapStepUser[usr.GetChatUserStr()] = userdata.StepUser{Stagekey: userdata.Stage_Start, Program: userdata.Programm_Volk}
+	/*
+		switch {
+		// 		log.Println("callback:", update.CallbackQuery.ChatInstance, msg.Text)
+		case update.MyChatMember != nil: // чат заблокировали или разюлокировали
+		case update.ChatMember != nil: // участник чата обновил свой статус
+		case update.ChatJoinRequest != nil: // Запрос на вступление в чат
+		case update.Poll != nil: // опрос завершен или изменилось состояние, только опросы бота
+		case update.PollAnswer != nil: // пользователь изменил свой ответ в опросе, только опросы бота
+		default:
+			log.Println("Нет отлавливаемого сообщения")
+		}
+	*/
 
-	log.Println("Message Type: ", usr.MessageType)
-	log.Println("Client Type: ", usr.ClientType, usr.GetChatUserStr())
-	if usr.ClientType == userdata.Client_Group {
-		log.Println("Группа: ", usr.ClientType, msg.Chat.FirstName, msg.Chat.Title, msg.Chat.Type)
-	}
+	// загрузим данные из базы, если там был пользователь
+	// возвращаем User
+	user := b.Pg.LoadData(msg)
+	user.Info = rt
+	//!  надо вернуть u.ChangeMessage(msg) /
+	// Программ подготовка
+	//user.Bot = b
+	send := send.Init(user, b.Api) // передаем api
+	prog := programs.Init(send)    // передаем юзера в программ - структуру
 
-	if msg == nil {
-		log.Println("мсж  пусто")
-		return
-	}
+	//send.DeleteMessageUser()
 
-	if msg.From.IsBot {
-		// клиент есть бот
-		return
+	log.Println("Тип пришел: ", msg.MessageID, user.Info.MessageType, "Client Type: ", rt.ClientType)
+	if user.Info.ClientType == msgtypes.Client_Group {
+		log.Println("Группа: ", user.Info.ClientType, msg.Chat.FirstName, msg.Chat.Title, msg.Chat.Type)
 	}
 
-	if int64(msg.From.ID) == int64(msg.Chat.ID) {
-		log.Println("Клиент в боте..")
-	}
-	//  else if int64(msg.Chat.ID) < 0 {
-	// 	log.Println("Клиент в группе..", msg.Chat.FirstName, msg.Chat.Title, msg.Chat.Type)
-	// }
+	log.Println("Вошел: ", user.Info.UpdateType, "| ", user.Msg.Chat.ID, "|", user.GetUserId(), " | ", user.Msg.From.Username, "|", user.UserData.UserMessage.LastTime.Format("02.01.2006 15:04:05"))
+	/*
+	 !! тест Отправляем кучку фоток
+	*/
+	// send.SendGroupPhoto([]string{"/home/arkadii/ProjectsGo/fibergo/bin/bot/img-2.jpg",
+	// 	"/home/arkadii/ProjectsGo/fibergo/bin/bot/i2mg-2.jpg",
+	// 	"/home/arkadii/ProjectsGo/fibergo/bin/bot/img-2.jpg",
+	// })
 
-	//	usr := b.Pg.LoadData(msg)
-
-	if msg.Text == "" {
-		b.sendTimeMessage(usr, "<b>Хочу только текст !!</b> сотрусь счас")
-		b.deleteMessageUser(msg)
-	} else {
-		cmd, arg := b.ParseMessageCommand(msg)
-		log.Println("Комманд", cmd, arg)
-		if msg.Text == "/start" {
-			b.MenuSend(usr, "Старт:")
-		} else {
-			b.deleteMessageMenu(usr)
+	//!! По кнопке приходит само сообщение. если там у кнопки была картинка то картинка и приходит
+	if user.Info.UpdateType != msgtypes.Upd_CallbackQuery {
+		if user.Info.MessageType == msgtypes.Msg_Photo {
+			log.Println("photo", len(msg.Photo))
+			send.LoadFileFromFileID(msg.Photo[len(msg.Photo)-1].FileID)
 		}
 
-		b.deleteMessageUser(msg) // удаление всего - убрать?
-
-		stages.Begin(msg)
-		usr.Txt = time.Now().Format("02.01.2006 15:04:05") + "\n" + msg.Text
-
-		log.Println("Вошел: ", "| ", usr.MsgUserId(), " | ", usr.Last.UserMessage.LastTime.Format("02.01.2006 15:04:05"))
-		//BUG
-		b.sendTimeMessage(usr, fmt.Sprintf("Привет %v  %v %s", msg.From.FirstName, msg.From.LastName, strings.Repeat("ᅠ", 20)), 10)
-		programs.StartProgram(usr)
-		//BUG
-		b.InlineMenuSet(usr, usr.CreateInlineMenu())
-		usr.Last.UserMessage.LastTime = time.Now()
-		b.deleteMessage(usr)
-		b.Pg.SaveData(usr)
-
+		if user.Info.MessageType == msgtypes.Msg_Document {
+			log.Println("Докум")
+			send.LoadFileFromFileID(msg.Document.FileID)
+		}
 	}
+	// удаляет последние сообщения из чата пользователя
+	// указываем кол-во последних
+	// send.DeleteLastMessages(msg, 10)
+	// запустим горутину ?
+	go func() {
+		prog.ProgramBegin()
+		//time.Sleep(1 * time.Second)
+		//log.Println("time>", user.Msg.Text)
+		// send.DeleteMessage()
+		user.UserData.UserMessage.LastTime = time.Now()
+		//log.Println("inl25:", *user.UserData.InlineMenuAll[user.GetChatId()].MessageID)
+		b.Pg.SaveData(user)
 
-	// b.Api.DeleteMyCommands(&telegrambot.DeleteMyCommandsParams{
-	// 	Scope: &telegrambot.BotCommandScope{
-	// 		Type: telegrambot.BotCommandScopeTypeAllChatAdministrators, // в чаты где бот адмистратором
-	// 		//Type:   telegrambot.BotCommandScopeTypeChat, // в чат откуда вылез пользователь
-	// 		ChatID: msg.Chat.ID,
-	// 		UserID: msg.From.ID,
-	// 	},
-	// })
-	b.Api.SetMyCommands(&telegrambot.SetMyCommandsParams{
-		Commands: []*telegrambot.BotCommand{
-			{
-				Command:     "/start",
-				Description: "Хочешь узнать?",
-			},
-			{
-				Command:     "/start2",
-				Description: "Чтото не получается?",
-			},
-		},
-		Scope: &telegrambot.BotCommandScope{
-			//	Type:   telegrambot.BotCommandScopeTypeAllChatAdministrators, // в чаты где бот адмистратором
-			Type:   telegrambot.BotCommandScopeTypeChat, // в чат откуда вылез пользователь
-			ChatID: msg.Chat.ID,
-			UserID: msg.From.ID,
-		},
-	})
-
-	// log.Println("mmmmmmeeeee")
-	b.Api.SetChatMenuButton(&telegrambot.SetChatMenuButtonParams{
-		// ChatID: msg.Chat.ID,
-		MenuButton: &telegrambot.MenuButton{
-			Type: telegrambot.MenuButtonTypeCommands,
-			Text: "gol",
-		},
-	})
-
-	// неполученные сообщения, только одно возвращает
-	// updmess, _ := b.Api.GetUpdates(&telegrambot.GetUpdatesParams{
-	// 	Offset:  -100,
-	// 	Timeout: 0,
-	// 	AllowedUpdates: *&[]telegrambot.UpdateType{
-	// 		"message",
-	// 	},
-	// })
-	// for i, v := range updmess {
-	// 	log.Println(i, "------------\n", v.Message.Text)
-	// }
-	//b.Api.GetFile(&telegrambot.GetFileParams{})
-
-	// type Fil telegrambot.InputFile
-	// func(f *Fil) multipartFormFile() (fieldname string, filename string, reader io.Reader)
-
-	// }
+	}()
 
 }

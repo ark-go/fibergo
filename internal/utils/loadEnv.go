@@ -46,12 +46,12 @@ func GetExecPath() (string, error) {
 }
 
 // Перевод byte int64 в string Kb Mb Tb и тд SI (1000 bytes in a kilobyte)
-func ByteCountSI(b int64) string {
+func ByteCountSI[T uint64 | int64](b T) string {
 	const unit = 1000
 	if b < unit {
 		return fmt.Sprintf("%d B", b)
 	}
-	div, exp := int64(unit), 0
+	div, exp := T(unit), 0
 	for n := b / unit; n >= unit; n /= unit {
 		div *= unit
 		exp++
@@ -61,12 +61,26 @@ func ByteCountSI(b int64) string {
 }
 
 // Перевод byte int64 в string KiB Mib TiB и тд IEC (1024 bytes in a kibibyte)
-func ByteCountIEC(b int64) string {
+//
+//	func ByteCountIEC(b int64) string {
+//		const unit = 1024
+//		if b < unit {
+//			return fmt.Sprintf("%d B", b)
+//		}
+//		div, exp := int64(unit), 0
+//		for n := b / unit; n >= unit; n /= unit {
+//			div *= unit
+//			exp++
+//		}
+//		return fmt.Sprintf("%.1f %ciB",
+//			float64(b)/float64(div), "KMGTPE"[exp])
+//	}
+func ByteCountIEC[T uint64 | int64](b T) string {
 	const unit = 1024
 	if b < unit {
 		return fmt.Sprintf("%d B", b)
 	}
-	div, exp := int64(unit), 0
+	div, exp := T(unit), 0
 	for n := b / unit; n >= unit; n /= unit {
 		div *= unit
 		exp++

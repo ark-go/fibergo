@@ -5,8 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	//	"github.com/ark-go/fibergo/internal/queues"
-	//	"github.com/ark-go/fibergo/internal/tbot"
+	"github.com/ark-go/fibergo/internal/msgtypes"
 	"github.com/nickname76/telegrambot"
 )
 
@@ -16,41 +15,24 @@ type LastUserMessage struct {
 	ChatID    *telegrambot.ChatID
 	LastTime  time.Time
 }
+
 type User struct {
-	//	Bot *tbot.Bot
-	// // userId
-	// UserId telegrambot.UserID
-	// // chatId
-	// ChatId telegrambot.ChatID
+	// Текущий уникальный ID  - ChatId + UserId
+	Uid string
 	// сообщение поступившее от пользователя
 	Msg *telegrambot.Message
-	// Стадия
-	Stage    Stagekey
-	StepUser StepUser
-
 	// уже был в базе
 	Olden bool
-	// текущее сообщение
-	//	Msg *telegrambot.Message
-	// тип текущего собщения
-	MessageType MessageType
-	// тип клиента
-	ClientType ClientType
-	// // Последнее сообщение от юзера
-	// LastUserMessage *LastUserMessage
-	// // последнее InlineMenu отправлено
-	// LastInlineMenuAll LastInlineMenuAll
-	// // последнее меню с кнопками отправлено
-	// LastMenuAll LastMenuAll
-	// // очередь отправленных сообщений
-	// LastMsgQueues LastMessageQueues
-	Last *Last
+	// информация о входящем сообщении
+	Info *msgtypes.Info
+	// структура для хранения в базе информация пользователя
+	UserData *UserData
 	// test
 	Txt string
 }
 
-// Получим если можем ChatId
-func (u *User) MsgChatId() (chatId telegrambot.ChatID) {
+// Получим если можем ChatId или 0
+func (u *User) GetChatId() (chatId telegrambot.ChatID) {
 	if u.Msg != nil {
 		if u.Msg.Chat != nil {
 			return u.Msg.Chat.ID
@@ -61,27 +43,32 @@ func (u *User) MsgChatId() (chatId telegrambot.ChatID) {
 }
 
 // Получим если сможем UserId
-func (u *User) MsgUserId() (userId telegrambot.UserID) {
+func (u *User) GetUserId() (userId telegrambot.UserID) {
 	if u.Msg != nil {
-		if u.Msg.Chat != nil {
+		if u.Msg.From != nil && !u.Msg.From.IsBot {
 			return u.Msg.From.ID
+		} else {
+			if u.Msg.Chat != nil {
+				return telegrambot.UserID(u.Msg.Chat.ID)
+			}
 		}
 	}
-	log.Println("Не определили ChatID")
+	log.Println("Не определили UserID")
 	return
 }
 
-func (u *User) GetChatUserStr() ChatUserStr {
-	ch := u.MsgChatId()
-	chh := int64(ch)
-	us := u.MsgUserId()
-	uss := int64(us)
-	return ChatUserStr(strconv.FormatInt(chh, 10) + ":" + strconv.FormatInt(uss, 10))
+// Выдаст текущий ID идентификатор получающийся
+//
+//	сложением Id Chat и ID User
+func (u *User) GetUid() string {
+	ch := u.GetChatId()
+	us := u.GetUserId()
+	u.Uid = strconv.FormatInt(int64(ch), 10) + ":" + strconv.FormatInt(int64(us), 10)
+	return u.Uid // ! ??
 }
 
-type Last struct {
-	// Стадия
-	//Stage Stagekey
+// структуру UserData храним в базе для каждого пользователя
+type UserData struct {
 	// Последнее сообщение от юзера
 	UserMessage *LastUserMessage
 	// последнее InlineMenu отправлено
@@ -90,33 +77,25 @@ type Last struct {
 	MenuAll LastMenuAll
 	// очередь отправленных сообщений
 	MsgQueues LastMessageQueues
-	// текущий шаг программы type MapStepUser map[ChatUserStr]StepUser
-	MapStepUser MapStepUser
+	// Текущая программа - шаг
+	NextStep NextStep
 }
 
 func InitUser(msg *telegrambot.Message) *User {
-	// if msg.From == nil || msg.Chat == nil {
-	// 	log.Println("Ошибка при инициализации User")
-	// 	return nil
-	// }
 
-	// структуру храним в базе для каждого пользователя
-	last := &Last{
+	// структуру UserData храним в базе для каждого пользователя
+	UserData := &UserData{
 		UserMessage:   &LastUserMessage{},
 		InlineMenuAll: LastInlineMenuAll{},
 		MenuAll:       LastMenuAll{},
 		MsgQueues:     LastMessageQueues{},
-		MapStepUser:   MapStepUser{},
 	}
 
-	// User - что знаемпро юзера
+	// User - что знаем про юзера
 	user := &User{
-		Msg:         msg,
-		MessageType: Msg_NotAvailable,
-		ClientType:  Client_NotAvailable,
-		// Last - эту структуру храним в базе, для пользователя
-		Last: last,
+		Msg: msg,
+		// UserData - эту структуру храним в базе, для пользователя
+		UserData: UserData,
 	}
-	user.ChangeMessage(msg)
 	return user
 }

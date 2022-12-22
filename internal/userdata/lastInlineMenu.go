@@ -13,12 +13,16 @@ type LastInlineMenu struct {
 	TimeDelete time.Time
 }
 
-type LastInlineMenuAll map[telegrambot.ChatID]LastInlineMenu
+type LastInlineMenuAll map[telegrambot.ChatID]*LastInlineMenu
 
-func (l *LastInlineMenuAll) Add(chatId telegrambot.ChatID, messageID telegrambot.MessageID, delayTime int) {
-	(*l)[chatId] = LastInlineMenu{
+func (l LastInlineMenuAll) Add(chatId telegrambot.ChatID, messageID telegrambot.MessageID, delayTime int) {
+	l[chatId] = &LastInlineMenu{
 		MessageID:  &messageID,
 		ChatID:     &chatId,
 		TimeDelete: time.Now().Add(time.Duration(delayTime) * time.Second),
 	}
+}
+
+func (l LastInlineMenuAll) Drop(chatId telegrambot.ChatID) {
+	delete(l, chatId)
 }
