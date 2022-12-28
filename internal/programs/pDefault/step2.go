@@ -2,6 +2,7 @@ package pDefault
 
 import (
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/ark-go/fibergo/internal/msgtypes"
@@ -11,16 +12,16 @@ import (
 func (p *ProgDef) step2() {
 	log.Println("Прог: Это шаг 2 2 2 2 ")
 	// ожидаем нажатие inline кнопки
-	if msgtypes.Upd_CallbackQuery != p.Send.User.Info.UpdateType {
-		p.Send.DeleteMessageUser()
-		p.Send.SendTimeMessage("я второй Нажмте кнопку !!")
+	if msgtypes.Upd_CallbackQuery != p.UpdateType {
+		p.DeleteMessageUser()
+		p.SendTimeMessage("я второй Нажмте кнопку !!")
 
 		return
 	}
-
-	if msg, err := p.Send.EditMessageCaption(p.InlineButtonStep2(), "Шажок 21 > "+p.Send.User.Info.CalbackData); err != nil {
+	str := fmt.Sprintf("\n<b>➖➖➖</b><pre>%s</pre>", p.CalbackData)
+	if msg, err := p.MenuCaption(p.menuButton2(), "Прог 2:"+str); err != nil {
 		if errors.Is(err, msgtypes.ErrNotFound) {
-			p.Send.InlineMenuSet(p.InlineButtonStep2(), "Шаг 2")
+			p.Send.MenuPhoto(p.menuButton2(), "img-210.png", "Шаг 2")
 		} else if !errors.Is(err, msgtypes.ErrNotModified) {
 			log.Println("Замена не прошла", msg, err.Error())
 		}
@@ -28,14 +29,14 @@ func (p *ProgDef) step2() {
 		log.Println("Замена 2", msg) //! нет msg ,,?
 	}
 	// установка текстового меню у пользователя или в группе в строке редактирования
-	p.Send.SetCommandMenu(p.commandMenuStep2())
+	p.SetCommandMenu(p.commandMenuStep2())
 	// нажатия кнопок проверим
-	switch p.Send.User.Info.CalbackData {
+	switch p.CalbackData {
 	case "stepOne":
 		p.Next("step1")
 	}
 	// снимаем значок ожидания у кнопки
-	p.Send.AnswerCallbackQuery("")
+	p.AnswerCallbackQuery("")
 	//log.Println("кнопка:", p.Send.User.Info.CalbackData)
 
 }
@@ -58,7 +59,7 @@ func (p *ProgDef) commandMenuStep2() (botCommand []*telegrambot.BotCommand) {
 	return
 }
 
-func (p *ProgDef) InlineButtonStep2() *telegrambot.InlineKeyboardMarkup {
+func (p *ProgDef) menuButton2() *telegrambot.InlineKeyboardMarkup {
 	return &telegrambot.InlineKeyboardMarkup{
 		InlineKeyboard: [][]*telegrambot.InlineKeyboardButton{{
 			{
@@ -71,7 +72,7 @@ func (p *ProgDef) InlineButtonStep2() *telegrambot.InlineKeyboardMarkup {
 				CallbackData: "Я вася@петров",
 			},
 			{
-				Text:         "Шаг 1",
+				Text:         "Фотки",
 				CallbackData: "stepOne",
 			},
 			{

@@ -11,14 +11,11 @@ import (
 	"github.com/joho/godotenv"
 )
 
-var F = loadEnvFile() // запуск при загрузке пакета
-// путь к  файлу .env
-func loadEnvFile() string {
+var ExecDir = GetExecPath()
+var F = loadEnvFile(ExecDir) // запуск при загрузке пакета
 
-	path, err := GetExecPath()
-	if err != nil {
-		log.Println(err)
-	}
+// путь к  файлу .env
+func loadEnvFile(path string) string {
 
 	pathEnv := filepath.Join(path, ".env")
 	//pathEnv := path + ".env"
@@ -30,19 +27,19 @@ func loadEnvFile() string {
 }
 
 // Получим каталог exe-шника
-func GetExecPath() (string, error) {
+func GetExecPath() string {
 	// путь к исполняемому файлу
 	path, err := os.Executable()
 	if err != nil {
-		return "", err
+		log.Panicln("Error GetExecPath:", err)
 	}
 	// проверка на символическую ссылку
 	path, err = filepath.EvalSymlinks(path)
 	if err != nil {
-		return "", err
+		log.Panicln("Error GetExecPath:", err)
 	}
 	path = filepath.Dir(path)
-	return path, nil
+	return path
 }
 
 // Перевод byte int64 в string Kb Mb Tb и тд SI (1000 bytes in a kilobyte)

@@ -20,19 +20,21 @@ type IProgCopy interface {
 	IsCommand(cmd string) bool
 }
 type ProgDef struct {
-	Send    *send.Send
-	Program IProgCopy
+	*send.Send
+	*programs.Program //IProgCopy
+	*msgtypes.Info
 }
 
 func StartProg(program *programs.Program, step string) {
 	p1 := ProgDef{
 		Send:    program.Send,
 		Program: program,
+		Info:    program.Send.User.Info,
 	}
 	// удаляем сообщение которое прислал пользователь из чата
-	p1.Send.DeleteMessageUser()
+	p1.DeleteMessageUser()
 	// в данной программе используем форму с Inline кнопками, поэтому только приватный режим
-	if p1.Send.User.Info.ClientType != msgtypes.Client_Private {
+	if p1.ClientType != msgtypes.Client_Private {
 		log.Println("Эта программа с inline кнопками, требует Private клиента, пропускаем.")
 		return
 	}

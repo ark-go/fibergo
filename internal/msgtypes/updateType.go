@@ -1,9 +1,9 @@
 package msgtypes
 
-type UpdateTypeInt int
+type UpdateType int
 
 const (
-	Upd_notavailable UpdateTypeInt = iota
+	Upd_notavailable UpdateType = iota
 	Upd_Message
 	Upd_EditedMessage
 	Upd_ChannelPost

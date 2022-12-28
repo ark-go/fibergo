@@ -8,6 +8,7 @@ import (
 	//	"os"
 
 	"github.com/ark-go/fibergo/internal/db"
+	"github.com/ark-go/fibergo/internal/webs"
 
 	_ "github.com/ark-go/fibergo/internal/programs/pDefault"
 	"github.com/ark-go/fibergo/internal/tbot"
@@ -25,7 +26,7 @@ func main() {
 	if err != nil {
 		os.Exit(1)
 	}
-
+	go webs.Start()
 	tbot.InitBot(pg)
 	// sv := &services.Service{}
 	// sv.InitBot()

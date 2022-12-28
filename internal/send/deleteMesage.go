@@ -16,17 +16,23 @@ import (
 */
 func (s *Send) DeleteMessage() error {
 	log.Println("В базе ", len(s.User.UserData.MsgQueues), "записей для удаления")
-	for i, usrmes := range s.User.UserData.MsgQueues {
-		if usrmes.TimeDelete.Before(time.Now()) {
+	//for i, usrmes := range s.User.UserData.MsgQueues
+	// будем стирать из slice поэтому задом наперед читаем
+	for i := len(s.User.UserData.MsgQueues) - 1; i >= 0; i-- {
+		xx := s.User.UserData.MsgQueues[i]
+		if xx.TimeDelete.Before(time.Now()) {
 			//log.Println("for del", *usrmes.ChatID, *usrmes.MessageID, usrmes.TimeDelete)
 
 			s.api.DeleteMessage(&telegrambot.DeleteMessageParams{
-				ChatID:    telegrambot.ChatID(*usrmes.ChatID),
-				MessageID: telegrambot.MessageID(*usrmes.MessageID),
+				ChatID:    telegrambot.ChatID(*xx.ChatID),
+				MessageID: telegrambot.MessageID(*xx.MessageID),
 			})
 			//INFO удаляем в любом случае, мы не выяняем причину но осталяя сообщение мы его больще никогда не сотрем, если оно уже стерто
 			s.User.UserData.MsgQueues.RemoveId(i)
+
+			//delete(s.User.UserData.MsgQueues, usrmes)
 		}
+		log.Println("Удаляем из списка", i)
 	}
 	//log.Println("Осталось задания для удаления:", usr.LastMsgQueues.Size())
 	return nil

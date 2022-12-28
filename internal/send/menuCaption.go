@@ -7,7 +7,9 @@ import (
 	"github.com/nickname76/telegrambot"
 )
 
-func (s *Send) EditMessageCaption(replyMark *telegrambot.InlineKeyboardMarkup, mess string) (*telegrambot.Message, error) {
+// Замена Caption у MessagePhoto
+// заменяем текст у картинки
+func (s *Send) MenuCaption(replyMark *telegrambot.InlineKeyboardMarkup, mess string) (*telegrambot.Message, error) {
 
 	if msg, ok := s.User.UserData.InlineMenuAll[s.User.GetChatId()]; ok {
 		mess, err := s.api.EditMessageCaption(&telegrambot.EditMessageCaptionParams{

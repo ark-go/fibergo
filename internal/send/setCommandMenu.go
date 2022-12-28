@@ -14,13 +14,16 @@ func (s *Send) SetCommandMenu(botCommand []*telegrambot.BotCommand) {
 			},
 		}
 	}
-	s.api.SetMyCommands(&telegrambot.SetMyCommandsParams{
-		Commands: botCommand,
-		Scope: &telegrambot.BotCommandScope{
-			//	Type:   telegrambot.BotCommandScopeTypeAllChatAdministrators, // в чаты где бот адмистратором
-			Type:   telegrambot.BotCommandScopeTypeChat, // в чат откуда вылез пользователь
-			ChatID: s.User.GetChatId(),
-			UserID: s.User.GetUserId(),
-		},
-	})
+	// ! Зависала функция пока вывел в горутину?
+	go func() {
+		s.api.SetMyCommands(&telegrambot.SetMyCommandsParams{
+			Commands: botCommand,
+			Scope: &telegrambot.BotCommandScope{
+				//	Type:   telegrambot.BotCommandScopeTypeAllChatAdministrators, // в чаты где бот адмистратором
+				Type:   telegrambot.BotCommandScopeTypeChat, // в чат откуда вылез пользователь
+				ChatID: s.User.GetChatId(),
+				UserID: s.User.GetUserId(),
+			},
+		})
+	}()
 }

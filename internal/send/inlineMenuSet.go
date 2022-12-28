@@ -12,23 +12,14 @@ import (
 
 // Установка InlineMenu меню к сообщению
 func (s *Send) InlineMenuSet(knopki *telegrambot.InlineKeyboardMarkup, text ...string) {
-	path, err1 := utils.GetExecPath()
-	if err1 != nil {
-		log.Println(err1)
-		return
-	}
 	s.InlineMenuDelete()
 	kto := 2
 	var inlMsg *telegrambot.Message
 	var err error
 	if kto == 1 {
 		inlMsg, err = s.inlineMenuText(s.User, knopki)
-	} else if kto == 2 {
-
-		path = filepath.Join(path, "img-210.png")
-		inlMsg, err = s.inlineMenuPhoto(knopki, path, text...)
 	} else {
-		path = filepath.Join(path, "gif-1.gif")
+		path := filepath.Join(utils.ExecDir, "gif-1.gif")
 		inlMsg, err = s.inlineMenuAnimate(s.User, knopki, path)
 	}
 
@@ -37,7 +28,7 @@ func (s *Send) InlineMenuSet(knopki *telegrambot.InlineKeyboardMarkup, text ...s
 		return
 	}
 	log.Println("inl:", inlMsg.MessageID, s.User.GetChatId(), inlMsg.Chat.ID)
-	s.User.UserData.InlineMenuAll.Add(s.User.GetChatId(), inlMsg.MessageID, 0)
+	s.User.UserData.InlineMenuAll.Add(s.User.GetChatId(), inlMsg.MessageID, "", 0)
 	log.Println("inl2:", *s.User.UserData.InlineMenuAll[s.User.GetChatId()].MessageID)
 }
 
@@ -56,33 +47,33 @@ func (s *Send) inlineMenuText(user *userdata.User, knopki *telegrambot.InlineKey
 }
 
 // меню с фоткой
-func (s *Send) inlineMenuPhoto(knopki *telegrambot.InlineKeyboardMarkup, filePath string, caption ...string) (*telegrambot.Message, error) {
-	if len(caption) == 0 {
-		caption = append(caption, "<b>Я тут бот.</b>\n")
-	}
-	file, err := os.Open(filePath)
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-	msg, err := s.api.SendPhoto(&telegrambot.SendPhotoParams{
-		ChatID: s.User.GetChatId(),
-		Photo: &telegrambot.FileReader{
-			Name:   "test",
-			Reader: file,
-		},
-		ProtectContent: true,
-		ReplyMarkup:    knopki,
-		ParseMode:      telegrambot.ParseModeHTML,
-		Caption:        caption[0],
-	})
+// func (s *Send) inlineMenuPhoto(knopki *telegrambot.InlineKeyboardMarkup, filePath string, caption ...string) (*telegrambot.Message, error) {
+// 	if len(caption) == 0 {
+// 		caption = append(caption, "<b>Я тут бот.</b>\n")
+// 	}
+// 	file, err := os.Open(filePath)
+// 	if err != nil {
+// 		log.Println(err)
+// 		return nil, err
+// 	}
+// 	msg, err := s.api.SendPhoto(&telegrambot.SendPhotoParams{
+// 		ChatID: s.User.GetChatId(),
+// 		Photo: &telegrambot.FileReader{
+// 			Name:   "test",
+// 			Reader: file,
+// 		},
+// 		ProtectContent: true,
+// 		ReplyMarkup:    knopki,
+// 		ParseMode:      telegrambot.ParseModeHTML,
+// 		Caption:        caption[0],
+// 	})
 
-	if err == nil {
-		id := msg.Photo[0].FileID // этот ИД можно отправить вместо картинки?
-		log.Println("Картинка отправлена ID:", id)
-	}
-	return msg, err
-}
+// 	if err == nil {
+// 		id := msg.Photo[0].FileID // этот ИД можно отправить вместо картинки?
+// 		log.Println("Картинка отправлена ID:", id)
+// 	}
+// 	return msg, err
+// }
 
 // меню с анимацией
 func (s *Send) inlineMenuAnimate(user *userdata.User, knopki *telegrambot.InlineKeyboardMarkup, filePath string) (*telegrambot.Message, error) {

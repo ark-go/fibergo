@@ -23,11 +23,8 @@ func (s *Send) LoadFileFromFileID(fileId telegrambot.FileID) (string, error) {
 	ext := filepath.Ext(filePhoto.FilePath)
 	fmt.Println("Файл", filePhoto.FilePath, "Ext", ext)
 	fileUrl := "https://api.telegram.org/file/bot" + os.Getenv("TG_Bot") + "/" + filePhoto.FilePath
-	path, err := utils.GetExecPath()
-	if err != nil {
-		return "", err
-	}
-	path = path + "/" + fileName
+
+	path := filepath.Join(utils.ExecDir, fileName)
 	endDown := make(chan bool)
 	notify := make(chan *utils.WriteCounter)
 	go utils.DownloadFile(path, fileUrl, endDown, notify)

@@ -8,7 +8,7 @@ import (
 
 // удаляем  InlineMenu если оно было
 func (s *Send) InlineMenuDelete() error {
-	log.Printf("all inl %++v\n", s.User.UserData.InlineMenuAll)
+	// log.Printf("all inl %++v\n", s.User.UserData.InlineMenuAll)
 	for _, inlineMenu := range s.User.UserData.InlineMenuAll {
 		if *inlineMenu.ChatID == s.User.GetChatId() {
 			if inlineMenu.MessageID != nil {

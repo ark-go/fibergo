@@ -7,7 +7,7 @@ import (
 )
 
 type Program struct {
-	Send *send.Send
+	*send.Send
 }
 
 // map type  program/func
@@ -71,6 +71,7 @@ func (p *Program) checkOrInitProgram(reset ...bool) (prog string, step string) {
 		prog := p.Send.User.ChangeProgram("startProg")
 		step := p.Send.User.ChangeStep("step1")
 		// удаляем сообщение из чата если там оно есть
+		p.DeleteMessage()
 		p.Send.InlineMenuDelete()
 		// сбрасывыем запись о форме-картинке меню с кнопками.
 		p.Send.User.UserData.InlineMenuAll.Drop(p.Send.User.GetChatId())

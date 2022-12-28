@@ -7,26 +7,23 @@ import (
 )
 
 type Info struct {
-	// Тип сообщения
-	MessageType MessageType
+	// тип обновления, пришедшее сообщение Update
+	UpdateType UpdateType
 	// Тип клиента
 	ClientType ClientType
+	// Тип сообщения
+	MessageType MessageType
+
 	// Для CallbackQuery, кнопоки, необходим ID
 	CallbackQueryID telegrambot.CallbackQueryID
 	// Calback Data - данные из кнопки
 	CalbackData string
-	// тип обновления, пришедшее сообщение Update
-	UpdateType UpdateTypeInt
 }
 
 // выделяем Message и тип Update
 func GetMsgAndTypes(update *telegrambot.Update) (*telegrambot.Message, *Info, error) {
 	rt := &Info{}
 	var msg *telegrambot.Message
-	// switch i := val.(type) {
-	// case nil:
-	// 	return nil, errors.New("не опредлен тип сообщения")
-
 	// TODO доделывать остальные типы обновления
 	switch {
 	case update.Message != nil: // сообщение

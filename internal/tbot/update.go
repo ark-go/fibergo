@@ -10,6 +10,7 @@ import (
 	"github.com/ark-go/fibergo/internal/send"
 	"github.com/ark-go/fibergo/internal/utils"
 	"github.com/nickname76/telegrambot"
+	"golang.org/x/exp/slices"
 )
 
 // func (b *Bot) ToIfaceBot() {}
@@ -81,6 +82,11 @@ func (b *Bot) Update(update *telegrambot.Update) {
 		//return
 	}
 
+	if msg.Chat.ID < 0 {
+		// BUG Чтото надо тут делть чтоб определить группу
+		return
+	}
+
 	if isDeleteMessage {
 		// удаляем сообщение пользователя, если нам не нравится его тип
 		err := b.Api.DeleteMessage(&telegrambot.DeleteMessageParams{
@@ -108,8 +114,27 @@ func (b *Bot) Update(update *telegrambot.Update) {
 
 	// загрузим данные из базы, если там был пользователь
 	// возвращаем User
-	user := b.Pg.LoadData(msg)
+	user, err := b.Pg.LoadData(msg)
+	if err != nil {
+		log.Println(err.Error()) // нет From e MSJ
+		return
+	}
+	log.Println(">--->->user.info", user.Info)
 	user.Info = rt
+	log.Println(">--->->user.info", user.Info)
+	// !! Необходимо разместить код авторизации как программу по умолчанию при отсутстви  данных в базе
+	var svoi = []int64{
+		266848998,  //ark
+		1624458545, // alina
+		//	-1001492038864, // группа
+	}
+	curUser := user.GetUserId()
+	if slices.Index(svoi, int64(curUser)) == -1 {
+		b.Api.SendMessage(&telegrambot.SendMessageParams{ChatID: user.GetChatId(), Text: "❌<b>Hi!</b>"})
+		return
+	}
+	// !! ^^^
+
 	//!  надо вернуть u.ChangeMessage(msg) /
 	// Программ подготовка
 	//user.Bot = b
@@ -153,7 +178,7 @@ func (b *Bot) Update(update *telegrambot.Update) {
 		//time.Sleep(1 * time.Second)
 		//log.Println("time>", user.Msg.Text)
 		// send.DeleteMessage()
-		user.UserData.UserMessage.LastTime = time.Now()
+		prog.User.UserData.UserMessage.LastTime = time.Now()
 		//log.Println("inl25:", *user.UserData.InlineMenuAll[user.GetChatId()].MessageID)
 		b.Pg.SaveData(user)
 
